@@ -3,4 +3,4 @@ gunicorn
 line-bot-sdk
 gspread
 oauth2client
-openai>=1.0.0
+openai==0.28

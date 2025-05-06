@@ -25,5 +25,17 @@ def push_message(to, text):
 USER_ID = "U02d3833747c411ee912a885b3f90df34"  # 自分のLINE IDに書き換える
 
 # ★ ここを時間別に切り替えてCronで使う
-push_message(USER_ID, "おはようございます！今日の勉強は何しますか？")  # 朝用
-# push_message(USER_ID, "1日お疲れ様でした！今日の進捗はどうでしたか？")  # 夜用
+from datetime import datetime
+
+now_hour = datetime.utcnow().hour + 9  # UTC → JST に変換
+
+if 5 <= now_hour < 12:
+    message_text = "おはようございます！今日も一日がんばりましょう！"
+elif 12 <= now_hour < 18:
+    message_text = "こんにちは！午後も集中していきましょう！"
+elif 18 <= now_hour < 24:
+    message_text = "1日よくがんばりましたね！ゆっくり休んでくださいね。"
+else:
+    message_text = "夜更かしさん、おやすみなさい〜"
+
+push_message(USER_ID, message_text)

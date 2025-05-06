@@ -4,12 +4,16 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 
+import openai
+
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 import json
 
 app = Flask(__name__)
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
@@ -44,7 +48,15 @@ def handle_message(event):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sheet.append_row([now, user_id, message])
 
-    reply = TextSendMessage(text="メッセージを記録しました！")
+  # ChatGPTの応答を生成
+response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+        {"role": "user", "content": message}
+    ]
+)
+reply_text = response["choices"][0]["message"]["content"]
+reply = TextSendMessage(text=reply_text)
     line_bot_api.reply_message(event.reply_token, reply)
 
 

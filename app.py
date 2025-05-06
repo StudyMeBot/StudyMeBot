@@ -20,7 +20,7 @@ def connect_to_sheet():
              "https://www.googleapis.com/auth/drive"]
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
     client = gspread.authorize(credentials)
-    sheet = client.open("StudyMeLog").sheet1
+    sheet = client.open("StudyMeBotLog").sheet1
     return sheet
 
 @app.route("/callback", methods=["POST"])

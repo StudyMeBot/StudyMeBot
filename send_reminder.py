@@ -1,5 +1,6 @@
 import os
 import requests
+from datetime import datetime
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
@@ -8,7 +9,6 @@ def push_message(to, text):
         "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
-
     body = {
         "to": to,
         "messages": [
@@ -18,24 +18,27 @@ def push_message(to, text):
             }
         ]
     }
-
     requests.post("https://api.line.me/v2/bot/message/push", headers=headers, json=body)
 
-# ★ ここに送る相手のユーザーIDを直接書く
-USER_ID = "U02d3833747c411ee912a885b3f90df34"  # 自分のLINE IDに書き換える
+# JSTに変換
+now_hour = datetime.utcnow().hour + 9
 
-# ★ ここを時間別に切り替えてCronで使う
-from datetime import datetime
-
-now_hour = datetime.utcnow().hour + 9  # UTC → JST に変換
-
+# 時間帯に応じたメッセージ
 if 5 <= now_hour < 12:
     message_text = "おはようございます！今日も一日がんばりましょう！"
 elif 12 <= now_hour < 18:
     message_text = "こんにちは！午後も集中していきましょう！"
 elif 18 <= now_hour < 24:
-    message_text = "1日よくがんばりましたね！ゆっくり休んでくださいね。"
+    message_text = "1日おつかれさまでしたね！ゆっくり休んでくださいね。"
 else:
-    message_text = "夜更かしさん、おやすみなさい〜"
+    message_text = "夜遅いですね、おやすみなさい！"
 
-push_message(USER_ID, message_text)
+# user_ids.txt から全ユーザーIDを読み込んで送信
+if os.path.exists("user_ids.txt"):
+    with open("user_ids.txt", "r") as f:
+        user_ids = set(line.strip() for line in f if line.strip())  # 重複排除
+
+    for uid in user_ids:
+        push_message(uid, message_text)
+else:
+    print("user_ids.txt が見つかりませんでした。")

@@ -11,6 +11,10 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 import json
 
+import re
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
 app = Flask(__name__)
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -31,6 +35,16 @@ def connect_to_sheet():
 def callback():
     signature = request.headers["X-Line-Signature"]
     body = request.get_data(as_text=True)
+    
+def update_notification_time(user_id, time_type, new_time):
+    sheet = connect_to_sheet()
+    records = sheet.get_all_records()
+    for i, row in enumerate(records):
+        if str(row['user_id']) == str(user_id):
+            # スプレッドシートの2行目以降がデータ行なので +2
+            sheet.update_cell(i + 2, {"morning": 2, "noon": 3, "night": 4}[time_type], new_time)
+            return True
+    return False
 
     try:
         handler.handle(body, signature)
@@ -60,6 +74,31 @@ def handle_follow(event):
 def handle_message(event):
     user_id = event.source.user_id
     message = event.message.text
+    
+    # 通知時刻の変更指示を解析
+    if any(x in message for x in ["朝", "昼", "夜"]):
+        if "通知なし" in message:
+            new_time = ""
+        else:
+            import re
+            match = re.search(r"\d{1,2}[:：]\d{2}", message)
+            if match:
+                new_time = match.group().replace("：", ":")
+            else:
+                new_time = ""
+
+        if "朝" in message:
+            update_notification_time(user_id, "morning", new_time)
+        elif "昼" in message:
+            update_notification_time(user_id, "noon", new_time)
+        elif "夜" in message:
+            update_notification_time(user_id, "night", new_time)
+
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="通知設定を更新しました！")
+        )
+        return  # それ以上の処理はしない
     
     print(f"User ID: {event.source.user_id}")
 

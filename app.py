@@ -43,6 +43,8 @@ def callback():
 def handle_message(event):
     user_id = event.source.user_id
     message = event.message.text
+    
+    print(f"User ID: {event.source.user_id}")
 
     sheet = connect_to_sheet()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

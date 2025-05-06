@@ -22,7 +22,7 @@ def push_message(to, text):
     requests.post("https://api.line.me/v2/bot/message/push", headers=headers, json=body)
 
 # ★ ここに送る相手のユーザーIDを直接書く
-USER_ID = "YOUR_USER_ID"  # 自分のLINE IDに書き換える
+USER_ID = "U02d3833747c411ee912a885b3f90df34"  # 自分のLINE IDに書き換える
 
 # ★ ここを時間別に切り替えてCronで使う
 push_message(USER_ID, "おはようございます！今日の勉強は何しますか？")  # 朝用

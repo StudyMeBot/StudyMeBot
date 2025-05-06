@@ -49,14 +49,14 @@ def handle_message(event):
     sheet.append_row([now, user_id, message])
 
   # ChatGPTの応答を生成
-response = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=[
-        {"role": "user", "content": message}
-    ]
-)
-reply_text = response["choices"][0]["message"]["content"]
-reply = TextSendMessage(text=reply_text)
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "user", "content": message}
+        ]
+    )
+    reply_text = response["choices"][0]["message"]["content"]
+    reply = TextSendMessage(text=reply_text)
     line_bot_api.reply_message(event.reply_token, reply)
 
 

@@ -38,6 +38,23 @@ def callback():
         abort(400)
 
     return "OK"
+    
+from linebot.models import FollowEvent, TextSendMessage  # すでに import してなければ追加
+
+@handler.add(FollowEvent)
+def handle_follow(event):
+    user_id = event.source.user_id
+    print(f"New follower: {user_id}")
+
+    # ファイルに保存（簡易実装、複数回追加されないよう工夫も可能）
+    with open("user_ids.txt", "a") as f:
+        f.write(user_id + "\n")
+
+    # ウェルカムメッセージ
+    line_bot_api.push_message(
+        user_id,
+        TextSendMessage(text="友だち追加ありがとうございます！")
+    )
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):

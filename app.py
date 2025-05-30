@@ -30,7 +30,10 @@ def callback():
 @handler.add(FollowEvent)
 def handle_follow(event):
     user_id = event.source.user_id
-    print("👤 友だち追加されたユーザーのID:", user_id)
+    line_bot_api.push_message(
+        user_id,
+        TextSendMessage(text=f"あなたのユーザーIDは:\n{user_id}")
+    )
 
 # 通常のメッセージ応答
 @handler.add(MessageEvent, message=TextMessage)

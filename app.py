@@ -1,7 +1,7 @@
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage, FollowEvent
 import os
 from dotenv import load_dotenv
 
@@ -26,6 +26,13 @@ def callback():
 
     return 'OK'
 
+# 👇 フォローイベント（友だち追加時）を処理
+@handler.add(FollowEvent)
+def handle_follow(event):
+    user_id = event.source.user_id
+    print("👤 友だち追加されたユーザーのID:", user_id)
+
+# 通常のメッセージ応答
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     text = event.message.text
@@ -35,6 +42,5 @@ def handle_message(event):
     )
 
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)

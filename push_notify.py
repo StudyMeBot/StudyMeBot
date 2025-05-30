@@ -10,7 +10,7 @@ load_dotenv()
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
 # あなたのユーザーID（テスト用）
-USER_ID = "DUMMY_USER_ID"
+USER_ID = "U8a4ecdbbd8a9e27421ef720554900839"
 
 # 通知メッセージ
 message = TextSendMessage(text="🕗 おはようございます！今日も少しずつ前に進もう💪")

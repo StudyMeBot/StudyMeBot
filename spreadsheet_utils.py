@@ -26,7 +26,7 @@ def update_notification_time(user_id, time_period_jp, new_time):
         gc = gspread.authorize(credentials)
 
         # スプレッドシートとワークシートを開く
-        sh = gc.open("StudyMeBotLog")  # ← スプレッドシート名を確認
+        sh = gc.open("StudyMeBotNotify")  # ← スプレッドシート名を確認
         worksheet = sh.sheet1
 
         # 全レコード取得

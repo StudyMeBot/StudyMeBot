@@ -5,6 +5,7 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage, FollowEve
 import os
 from dotenv import load_dotenv
 import re
+from spreadsheet_utils import update_notification_time
 
 label_mapping = {
     "朝": "morning",
@@ -76,10 +77,8 @@ def handle_message(event):
 
     time_period, new_time = parse_message(text)
 
-    if time_period and new_time:
-        # 仮でスプレッドシート更新の代わりに応答メッセージ
-        reply = f"{time_period}の通知時間を「{new_time}」に設定します。"
-        # 本番ではここで `update_notification_time(user_id, time_period, new_time)` を呼び出します
+   if time_period and new_time:
+    reply = update_notification_time(user_id, time_period, new_time)
     else:
         reply = "通知変更の形式が正しくありません。例：『朝の通知を7:30にして』"
 

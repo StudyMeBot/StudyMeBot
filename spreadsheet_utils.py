@@ -34,7 +34,7 @@ def update_notification_time(user_id, time_period_jp, new_time):
 
         # user_idで行を探す（2行目から）
         for idx, record in enumerate(records, start=2):
-            if record["user_id"] == user_id:
+            if record("user_id") == user_id:
                 # 対象列を見つけて更新
                 col_num = worksheet.find(col_label).col
                 worksheet.update_cell(idx, col_num, new_time)

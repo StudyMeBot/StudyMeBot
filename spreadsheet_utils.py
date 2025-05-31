@@ -4,7 +4,6 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 def update_notification_time(user_id, time_period_jp, new_time):
-    # ラベル変換（日本語 → 英語列名）
     label_mapping = {
         "朝": "morning",
         "昼": "noon",
@@ -25,22 +24,33 @@ def update_notification_time(user_id, time_period_jp, new_time):
         credentials = Credentials.from_service_account_file("credentials.json", scopes=scope)
         gc = gspread.authorize(credentials)
 
-        # スプレッドシートとワークシートを開く
-        sh = gc.open("StudyMeBotNotify")  # ← スプレッドシート名を確認
+        sh = gc.open("StudyMeBotNotify")
         worksheet = sh.sheet1
-
-        # 全レコード取得
         records = worksheet.get_all_records()
 
-        # user_idで行を探す（2行目から）
+        # user_idがあるかどうか確認
+        found = False
         for idx, record in enumerate(records, start=2):
-            if record("user_id") == user_id:
-                # 対象列を見つけて更新
+            if record.get("user_id") == user_id:
                 col_num = worksheet.find(col_label).col
                 worksheet.update_cell(idx, col_num, new_time)
+              　found = True
                 return f"{time_period_jp}の通知時間を「{new_time}」に更新しました。"
-
-        return "ユーザー情報がスプレッドシートに見つかりませんでした。"
+                
+        # なければ新しい行を追加（初期値は全部OFF）
+        if not found:
+            # ヘッダーの列順で初期化
+            header = worksheet.row_values(1)
+            new_row = []
+            for col in header:
+                if col == "user_id":
+                    new_row.append(user_id)
+                elif col == col_label:
+                    new_row.append(new_time)
+                else:
+                    new_row.append("OFF")
+            worksheet.append_row(new_row)
+            return f"{time_period_jp}の通知時間を「{new_time}」に設定し、新しいユーザーとして登録しました。"
 
     except Exception as e:
         return f"スプレッドシートの更新中にエラーが発生しました：{e}"

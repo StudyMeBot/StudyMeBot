@@ -26,17 +26,17 @@ def convert_to_24h(time_str, time_period):
 
 def parse_message(text):
    pattern = r"(朝|昼|夕方|夜)の通知を(?:(\d{1,2})(?:[:：](\d{2}))?時?(?:\d{1,2}分)?にして|やめて)"
-    match = re.search(pattern, text)
-    if match:
-        time_period = match.group(1)
-        hour = match.group(2)
-        minute = match.group(3) if match.group(3) else "00"
-        if hour:
-            raw_time = f"{hour}:{minute}"
-            converted_time = convert_to_24h(raw_time, time_period)
-        else:
-            converted_time = "OFF"
-        return time_period, converted_time
+   match = re.search(pattern, text)
+   if match:
+       time_period = match.group(1)
+       hour = match.group(2)
+       minute = match.group(3) if match.group(3) else "00"
+       if hour:
+           raw_time = f"{hour}:{minute}"
+           converted_time = convert_to_24h(raw_time, time_period)
+       else:
+           converted_time = "OFF"
+       return time_period, converted_time
     return None, None
 
 # .envファイルの読み込み

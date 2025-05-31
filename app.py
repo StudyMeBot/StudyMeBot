@@ -77,8 +77,8 @@ def handle_message(event):
 
     time_period, new_time = parse_message(text)
 
-   if time_period and new_time:
-    reply = update_notification_time(user_id, time_period, new_time)
+    if time_period and new_time:
+        reply = update_notification_time(user_id, time_period, new_time)
     else:
         reply = "通知変更の形式が正しくありません。例：『朝の通知を7:30にして』"
 

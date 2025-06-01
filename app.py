@@ -5,8 +5,12 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage, FollowEve
 import os
 from dotenv import load_dotenv
 import re
+import datetime
+
+from subject_dict import KNOWN_SUBJECTS
 from spreadsheet_utils import update_notification_time, record_study_log
 
+# ✅ 時間帯の日本語→英語変換
 label_mapping = {
     "朝": "morning",
     "昼": "noon",
@@ -14,8 +18,9 @@ label_mapping = {
     "夜": "night"
 }
 
+# ✅ 時刻を24時間表記に変換
 def convert_to_24h(time_str, time_period):
-    h, m = map(int, time_str.split(':'))
+    h, m = map(int, time_str.split(":"))
     if time_period == "朝":
         if h == 12:
             h = 0
@@ -24,47 +29,54 @@ def convert_to_24h(time_str, time_period):
             h += 12
     return f"{h:02}:{m:02}"
 
+# ✅ 通知メッセージ解析
 def parse_message(text):
-    pattern = r"(朝|昼|夕方|夜)の通知を(?:(\d{1,2})(?:[:：](\d{2}))?時?(?:\d{1,2}分)?にして|やめて)"
+    pattern = r"(朝|昼|夕方|夜)の通知を(?:\s*(\d{1,2})(?::|：| )?(\d{2})?|(\d{1,2})時半?)にして|やめて"
     match = re.search(pattern, text)
+
     if match:
         time_period = match.group(1)
-        hour = match.group(2)
-        minute = match.group(3) if match.group(3) else "00"
+
+        # パターン①：「7時30分」「7:30」など
+        if match.group(2):
+            hour = match.group(2)
+            minute = match.group(3) if match.group(3) else "00"
+        # パターン②：「7時半」など（group(4) が存在）
+        elif match.group(4):
+            hour = match.group(4)
+            minute = "30"
+        else:
+            return False, None, None
+
         converted_time = convert_to_24h(f"{hour}:{minute}", time_period)
-        return time_period, converted_time
-    return None, None
+        return True, time_period, converted_time
 
+    return False, None, None
+
+# ✅ 通知メッセージであるかの判定（補助）
 def is_notification_message(text):
-    """
-    通知変更メッセージとみなす条件：
-    - 朝・昼・夕・夜の時間帯キーワード
-    - 通知アクション系キーワード（通知・設定・リマインドなど）
-    - 数字（時刻）パターン
-    """
-    time_keywords = ["朝", "昼", "夕", "夜"]
-    action_keywords = ["通知", "リマインド", "知らせ", "設定", "変更", "変えて", "して", "お願い", "送って"]
-
+    time_keywords = ["朝", "昼", "夕方", "夜"]
+    action_keywords = ["通知", "リマインド", "知らせ", "設定", "変更", "して", "お願い", "送って"]
     has_time_word = any(tk in text for tk in time_keywords)
     has_action_word = any(ak in text for ak in action_keywords)
-    has_time_format = bool(re.search(r'\d{1,2}(:\d{2})?', text))
-
+    has_time_format = bool(re.search(r"\d{1,2}(:|：)?\d{2}", text))
     return has_time_word and has_action_word and has_time_format
 
-
+# ✅ 学習記録メッセージであるかの判定（辞書 + 時間形式）
 def is_study_log_message(text):
-    """
-    学習記録メッセージとみなす条件：
-    - 「30分」や「1時間」など時間の情報を含む
-    - 文頭に科目らしき語がある or #タグを含む
-    """
-    has_time = bool(re.search(r'(\d+)\s*分|(\d+)\s*時間', text))
-    has_subject = bool(re.search(r'^([\wぁ-んァ-ン一-龥]+)', text)) or ('#' in text)
+    has_time = bool(re.search(r"(\d+)\s*(分|ふん|時間)", text))
+    has_subject = any(subject in text for subject in KNOWN_SUBJECTS)
     return has_time and has_subject
+
+# ✅ subject を辞書から抽出
+def parse_subject(text: str) -> str | None:
+    for subject in KNOWN_SUBJECTS:
+        if subject in text:
+            return subject
+    return None
 
 # .envファイルの読み込み
 load_dotenv()
-
 app = Flask(__name__)
 
 # LINE Messaging APIの認証情報
@@ -95,73 +107,71 @@ def handle_follow(event):
 # 通常のメッセージ応答
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    import re
     import datetime
     from spreadsheet_utils import record_study_log, update_notification_time
+    from subject_dict import KNOWN_SUBJECTS
 
     user_id = event.source.user_id
     text = event.message.text.strip()
 
-    # ✅ 通知変更メッセージかどうか判定
-    if is_notification_message(text):
-        time_period, new_time = parse_message(text)
+    # 🧠 通知変更メッセージかどうか判定
+    is_notification, time_period, new_time = parse_message(text)
+    if is_notification:
         if time_period and new_time:
             reply = update_notification_time(user_id, time_period, new_time)
         else:
             reply = "⚠️ 通知時間の形式が正しくありません（例：「朝7時30分に通知して」）"
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
+        return
 
-    # ✅ 学習記録メッセージかどうか判定
-    elif is_study_log_message(text):
-        time_match = re.search(r'(\d+)\s*分|(\d+)\s*時間', text)
-        if time_match:
-            if time_match.group(1):
-                minutes = int(time_match.group(1))
-            elif time_match.group(2):
-                minutes = int(time_match.group(2)) * 60
-        else:
-            reply = "⚠️ 学習時間が見つかりませんでした（例：30分、1時間など）"
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
-            return
-
-        # ✅ subject の抽出（タグ優先、なければ文中から抽出）
-        tags = re.findall(r'#(\w+)', text)
-        if tags:
-            subject = '・'.join(tags)
-        else:
-            subject_match = re.search(r'([\wぁ-んァ-ン一-龥]{2,10})', text)
-            subject = subject_match.group(1) if subject_match else None
-
-        # ❗ subjectが特定できなかった場合 → 記録せず注意メッセージを返す
-        if not subject:
-            reply = (
-                "⚠️ 科目名が見つかりませんでした。\n\n"
-                "「英語30分」や「#数学 1時間」などの形式で送ってください。"
-            )
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
-            return
-
-        # ✅ subjectが判定できた場合のみ記録
-        try:
-            record_study_log({
-                'datetime': datetime.datetime.now().isoformat(),
-                'user_id': user_id,
-                'subject': subject,
-                'minutes': minutes,
-                'raw_message': text
-            })
-            reply = f"✅ {subject}を{minutes}分 記録しました！"
-        except Exception as e:
-            reply = f"❌ スプレッドシート記録中にエラーが発生しました：{e}"
-
-    # ❌ どちらでもない場合は注意喚起
-    else:
+    # 🧠 学習記録メッセージかどうか判定
+    import re
+    time_match = re.search(r"(\d+)\s*(分|ふん|時間)", text)
+    if not time_match:
         reply = (
             "⚠️ 入力形式が判別できませんでした。\n\n"
             "📌 通知変更 → 例：「朝7時30分に通知して」\n"
-            "📌 学習記録 → 例：「英語30分」「#復習 1時間」"
+            "📌 学習記録 → 例：「英語30分」「情報 1時間」"
         )
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
+        return
 
-    # 💬 共通の返信処理
+    # 分数に変換
+    if time_match.group(2) in ["分", "ふん"]:
+        minutes = int(time_match.group(1))
+    elif time_match.group(2) == "時間":
+        minutes = int(time_match.group(1)) * 60
+    else:
+        minutes = 0
+
+    # 📚 subject 抽出（辞書ベースで検索）
+    subject = None
+    for word in KNOWN_SUBJECTS:
+        if word in text:
+            subject = word
+            break
+
+    if not subject:
+        reply = (
+            "⚠️ 科目名が見つかりませんでした。\n\n"
+            "📌 例：「英語30分」「数学 1時間」などの形式で送ってください。"
+        )
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
+        return
+
+    # ✅ スプレッドシートに記録
+    try:
+        record_study_log({
+            "datetime": datetime.datetime.now().isoformat(),
+            "user_id": user_id,
+            "subject": subject,
+            "minutes": minutes,
+            "raw_message": text
+        })
+        reply = f"✅ 『{subject}』を{minutes}分 記録しました！"
+    except Exception as e:
+        reply = f"❌ スプレッドシート記録中にエラーが発生しました: {e}"
+
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
 
 if __name__ == "__main__":

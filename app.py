@@ -35,6 +35,33 @@ def parse_message(text):
         return True, time_period, converted_time  # ✅ 通知変更と確定
     return False, None, None  # ✅ 通知変更ではない
 
+def is_notification_message(text):
+    """
+    通知変更メッセージとみなす条件：
+    - 朝・昼・夕・夜の時間帯キーワード
+    - 通知アクション系キーワード（通知・設定・リマインドなど）
+    - 数字（時刻）パターン
+    """
+    time_keywords = ["朝", "昼", "夕", "夜"]
+    action_keywords = ["通知", "リマインド", "知らせ", "設定", "変更", "変えて", "して", "お願い", "送って"]
+
+    has_time_word = any(tk in text for tk in time_keywords)
+    has_action_word = any(ak in text for ak in action_keywords)
+    has_time_format = bool(re.search(r'\d{1,2}(:\d{2})?', text))
+
+    return has_time_word and has_action_word and has_time_format
+
+
+def is_study_log_message(text):
+    """
+    学習記録メッセージとみなす条件：
+    - 「30分」や「1時間」など時間の情報を含む
+    - 文頭に科目らしき語がある or #タグを含む
+    """
+    has_time = bool(re.search(r'(\d+)\s*分|(\d+)\s*時間', text))
+    has_subject = bool(re.search(r'^([\wぁ-んァ-ン一-龥]+)', text)) or ('#' in text)
+    return has_time and has_subject
+
 # .envファイルの読み込み
 load_dotenv()
 
@@ -75,15 +102,16 @@ def handle_message(event):
     user_id = event.source.user_id
     text = event.message.text.strip()
 
-    # 🔍 通知変更メッセージかどうか判定（戻り値を3つに変更！）
-    is_notification, time_period, new_time = parse_message(text)
+    # ✅ 通知変更メッセージかどうか判定
+    if is_notification_message(text):
+        time_period, new_time = parse_message(text)
+        if time_period and new_time:
+            reply = update_notification_time(user_id, time_period, new_time)
+        else:
+            reply = "⚠️ 通知時間の形式が正しくありません（例：「朝7時30分に通知して」）"
 
-    if is_notification:
-        # ✅ 通知時間の更新処理
-        reply = update_notification_time(user_id, time_period, new_time)
-
-    else:
-        # 📝 学習記録処理（例：「英語30分」「#数学1時間」など）
+    # ✅ 学習記録メッセージかどうか判定
+    elif is_study_log_message(text):
         time_match = re.search(r'(\d+)\s*分|(\d+)\s*時間', text)
         if time_match:
             if time_match.group(1):
@@ -114,6 +142,14 @@ def handle_message(event):
             reply = f"✅ {subject}を{minutes}分 記録しました！"
         except Exception as e:
             reply = f"❌ スプレッドシート記録中にエラーが発生しました：{e}"
+
+    # ❌ どちらでもない場合は注意喚起
+    else:
+        reply = (
+            "⚠️ 入力形式が判別できませんでした。\n\n"
+            "📌 通知変更 → 例：「朝7時30分に通知して」\n"
+            "📌 学習記録 → 例：「英語30分」「#復習 1時間」"
+        )
 
     # 💬 共通の返信処理
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))

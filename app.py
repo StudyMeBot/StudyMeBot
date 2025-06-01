@@ -148,7 +148,7 @@ def handle_message(event):
 
     # 📚 subject 抽出（辞書ベースで検索）
     subject = None
-    for word in KNOWN_SUBJECTS:
+    for word in CATEGORIZED_SUBJECTS:
         if word in text:
             subject = word
             break

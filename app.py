@@ -7,10 +7,8 @@ from dotenv import load_dotenv
 import re
 import datetime
 
-from subject_dict import get_all_subjects
+from subject_dict import ALL_SUBJECTS
 from spreadsheet_utils import update_notification_time, record_study_log
-
-ALL_SUBJECTS = get_all_subjects()
 
 # ✅ 時間帯の日本語→英語変換
 label_mapping = {
@@ -111,7 +109,7 @@ def handle_follow(event):
 def handle_message(event):
     import datetime
     from spreadsheet_utils import record_study_log, update_notification_time
-    from subject_dict import CATEGORIZED_SUBJECTS
+    from subject_dict import ALL_SUBJECTS
 
     user_id = event.source.user_id
     text = event.message.text.strip()
@@ -148,7 +146,7 @@ def handle_message(event):
 
     # 📚 subject 抽出（辞書ベースで検索）
     subject = None
-    for word in CATEGORIZED_SUBJECTS:
+    for word in ALL_SUBJECTS:
         if word in text:
             subject = word
             break

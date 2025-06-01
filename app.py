@@ -32,8 +32,8 @@ def parse_message(text):
         hour = match.group(2)
         minute = match.group(3) if match.group(3) else "00"
         converted_time = convert_to_24h(f"{hour}:{minute}", time_period)
-        return True, time_period, converted_time  # ✅ 通知変更と確定
-    return False, None, None  # ✅ 通知変更ではない
+        return time_period, converted_time
+    return None, None
 
 def is_notification_message(text):
     """
@@ -123,14 +123,24 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
             return
 
-        # subject の抽出（タグ優先、なければ文頭）
+        # ✅ subject の抽出（タグ優先、なければ文中から抽出）
         tags = re.findall(r'#(\w+)', text)
-        if not tags:
-            subject_match = re.match(r'^([\wぁ-んァ-ン一-龥]+)', text)
-            subject = subject_match.group(1) if subject_match else "不明"
-        else:
+        if tags:
             subject = '・'.join(tags)
+        else:
+            subject_match = re.search(r'([\wぁ-んァ-ン一-龥]{2,10})', text)
+            subject = subject_match.group(1) if subject_match else None
 
+        # ❗ subjectが特定できなかった場合 → 記録せず注意メッセージを返す
+        if not subject:
+            reply = (
+                "⚠️ 科目名が見つかりませんでした。\n\n"
+                "「英語30分」や「#数学 1時間」などの形式で送ってください。"
+            )
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
+            return
+
+        # ✅ subjectが判定できた場合のみ記録
         try:
             record_study_log({
                 'datetime': datetime.datetime.now().isoformat(),

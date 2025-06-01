@@ -42,6 +42,3 @@ KNOWN_SUBJECTS = {
         "資料作成", "しりょうさくせい", "Excel", "えくせる", "プレゼン", "ぷれぜん", "ライティング", "らいてぃんぐ"
     ]
 }
-
-# 🎯 すべての科目を 1 リストに統合
-KNOWN_SUBJECTS = sum(CATEGORIZED_SUBJECTS.values(), [])

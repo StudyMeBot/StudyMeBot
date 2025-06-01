@@ -31,13 +31,9 @@ def parse_message(text):
         time_period = match.group(1)
         hour = match.group(2)
         minute = match.group(3) if match.group(3) else "00"
-        if hour:
-            raw_time = f"{hour}:{minute}"
-            converted_time = convert_to_24h(raw_time, time_period)
-        else:
-            converted_time = "OFF"
-        return time_period, converted_time
-    return None, None
+        converted_time = convert_to_24h(f"{hour}:{minute}", time_period)
+        return True, time_period, converted_time  # ✅ 通知変更と確定
+    return False, None, None  # ✅ 通知変更ではない
 
 # .envファイルの読み込み
 load_dotenv()
@@ -74,17 +70,18 @@ def handle_follow(event):
 def handle_message(event):
     import re
     import datetime
-    from spreadsheet_utils import record_study_log  # 念のため関数内でも使えます
+    from spreadsheet_utils import record_study_log, update_notification_time
 
     user_id = event.source.user_id
     text = event.message.text.strip()
 
-    # 🔍 通知変更メッセージかどうか判定
-    time_period, new_time = parse_message(text)
+    # 🔍 通知変更メッセージかどうか判定（戻り値を3つに変更！）
+    is_notification, time_period, new_time = parse_message(text)
 
-    if time_period and new_time:
+    if is_notification:
         # ✅ 通知時間の更新処理
         reply = update_notification_time(user_id, time_period, new_time)
+
     else:
         # 📝 学習記録処理（例：「英語30分」「#数学1時間」など）
         time_match = re.search(r'(\d+)\s*分|(\d+)\s*時間', text)
@@ -119,10 +116,7 @@ def handle_message(event):
             reply = f"❌ スプレッドシート記録中にエラーが発生しました：{e}"
 
     # 💬 共通の返信処理
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=reply)
-    )
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

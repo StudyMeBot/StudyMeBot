@@ -64,3 +64,38 @@ def update_notification_time(user_id, time_period_jp, new_time):
 
     except Exception as e:
         return f"スプレッドシートの更新中にエラーが発生しました：[e]"
+
+# ✅ 学習記録用の関数（新規追加）
+def record_study_log(data):
+    """
+    学習記録を StudyMeBotStudyLog の StudyLog シートに記録します。
+    data: dict {
+        'datetime': ISO形式の日付,
+        'user_id': LINEのユーザーID,
+        'subject': 科目・タグ,
+        'minutes': 数値（分）,
+        'raw_message': 元のLINEメッセージ
+    }
+    """
+    try:
+        scope = [
+            "https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/drive"
+        ]
+        cred_path = get_credentials_from_env()
+        credentials = Credentials.from_service_account_file(cred_path, scopes=scope)
+        gc = gspread.authorize(credentials)
+
+        sh = gc.open("StudyMeBotStudyLog")
+        worksheet = sh.worksheet("StudyLog")
+
+        row = [
+            data['datetime'],
+            data['user_id'],
+            data['subject'],
+            data['minutes'],
+            data['raw_message']
+        ]
+        worksheet.append_row(row)
+    except Exception as e:
+        print(f"学習記録の記入中にエラーが発生しました: {e}")

@@ -1,6 +1,6 @@
 # subject_dict.py
 
-CATEGORIZED_SUBJECTS = [
+ALL_SUBJECTS = [
     #幼児
         "えんぴつ", "ぬりえ", "ひらがな", "かず", "リトミック", "りとみっく", "おゆうぎ",
     #習い事
@@ -34,6 +34,3 @@ CATEGORIZED_SUBJECTS = [
         "プログラミング", "ぷろぐらみんぐ", "タイピング", "たいぴんぐ", "パソコン", "ぱそこん",
         "資料作成", "しりょうさくせい", "Excel", "えくせる", "プレゼン", "ぷれぜん", "ライティング", "らいてぃんぐ"
  ]
-
-def get_all_subjects():
-    return list(set(sum(CATEGORIZED_SUBJECTS.values(), [])))

@@ -5,7 +5,7 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage, FollowEve
 import os
 from dotenv import load_dotenv
 import re
-from spreadsheet_utils import update_notification_time
+from spreadsheet_utils import update_notification_time, record_study_log
 
 label_mapping = {
     "朝": "morning",
@@ -72,20 +72,58 @@ def handle_follow(event):
 # 通常のメッセージ応答
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    user_id = event.source.user_id
-    text = event.message.text
+    import re
+    import datetime
+    from spreadsheet_utils import record_study_log  # 念のため関数内でも使えます
 
+    user_id = event.source.user_id
+    text = event.message.text.strip()
+
+    # 🔍 通知変更メッセージかどうか判定
     time_period, new_time = parse_message(text)
 
     if time_period and new_time:
+        # ✅ 通知時間の更新処理
         reply = update_notification_time(user_id, time_period, new_time)
     else:
-        reply = "通知変更の形式が正しくありません。例：『朝の通知を7:30にして』"
+        # 📝 学習記録処理（例：「英語30分」「#数学1時間」など）
+        time_match = re.search(r'(\d+)\s*分|(\d+)\s*時間', text)
+        if time_match:
+            if time_match.group(1):
+                minutes = int(time_match.group(1))
+            elif time_match.group(2):
+                minutes = int(time_match.group(2)) * 60
+        else:
+            reply = "⚠️ 学習時間が見つかりませんでした（例：30分、1時間など）"
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
+            return
 
+        # subject の抽出（タグ優先、なければ文頭）
+        tags = re.findall(r'#(\w+)', text)
+        if not tags:
+            subject_match = re.match(r'^([\wぁ-んァ-ン一-龥]+)', text)
+            subject = subject_match.group(1) if subject_match else "不明"
+        else:
+            subject = '・'.join(tags)
+
+        try:
+            record_study_log({
+                'datetime': datetime.datetime.now().isoformat(),
+                'user_id': user_id,
+                'subject': subject,
+                'minutes': minutes,
+                'raw_message': text
+            })
+            reply = f"✅ {subject}を{minutes}分 記録しました！"
+        except Exception as e:
+            reply = f"❌ スプレッドシート記録中にエラーが発生しました：{e}"
+
+    # 💬 共通の返信処理
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=reply)
     )
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

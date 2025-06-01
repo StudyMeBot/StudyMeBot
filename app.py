@@ -70,10 +70,23 @@ def is_study_log_message(text):
 
 # ✅ subject を辞書から抽出
 def parse_subject(text: str) -> str | None:
-    for subject in ALL_SUBJECTS:
-        if subject in text:
-            return subject
-    return None
+    hour_match = re.search(r"(\d+)時間", text)
+    minute_match = re.search(r"(\d+)分", text)
+    han_match = re.search(r"(?:\d+)?時間半|半", text)
+
+    minutes = 0
+
+    if hour_match:
+        minutes += int(hour_match.group(1)) * 60
+
+    if minute_match:
+        minutes += int(minute_match.group(1))
+
+    if han_match:
+        # 「半」だけ単独 or 「1時間半」などを検知したとき
+        minutes += 30
+
+    return minutes if minutes > 0 else None
 
 # .envファイルの読み込み
 load_dotenv()

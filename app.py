@@ -111,7 +111,7 @@ def handle_follow(event):
 def handle_message(event):
     import datetime
     from spreadsheet_utils import record_study_log, update_notification_time
-    from subject_dict import KNOWN_SUBJECTS
+    from subject_dict import CATEGORIZED_SUBJECTS
 
     user_id = event.source.user_id
     text = event.message.text.strip()

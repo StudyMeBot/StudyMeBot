@@ -71,25 +71,32 @@ def is_study_log_message(text):
 # ✅ subject を辞書から抽出
 import re
 
-def parse_subject_and_minutes(text: str) -> tuple[str, int] | None:
-    pattern = r"(?P<subject>.+?)(?:(?P<hour>\d+)時間)?(?:(?P<half>半))?(?:(?P<minute>\d+)分)?"
-    match = re.search(pattern, text)
-    if not match:
-        return None
+def extract_minutes(text: str) -> int | None:
+    # 1. 「1時間24分」のようなパターンを最初にチェック
+    match = re.search(r"(?P<hour>\d+)時間(?P<minute>\d+)分", text)
+    if match:
+        hour = int(match.group("hour"))
+        minute = int(match.group("minute"))
+        return hour * 60 + minute
 
-    subject = match.group("subject").strip()
-    minutes = 0
+    # 2. 「1時間」だけのパターン
+    match = re.search(r"(?P<hour>\d+)時間", text)
+    if match:
+        hour = int(match.group("hour"))
+        return hour * 60
 
-    # 合計時間の算出
-    if match.group("hour"):
-        minutes += int(match.group("hour")) * 60
-    if match.group("half"):
-        minutes += 30
-    if match.group("minute"):
-        minutes += int(match.group("minute"))
+    # 3. 「24分」だけのパターン
+    match = re.search(r"(?P<minute>\d+)分", text)
+    if match:
+        minute = int(match.group("minute"))
+        return minute
 
-    return (subject, minutes) if subject and minutes > 0 else None
+    # 4. 最後に「半」だけのパターン（必要に応じて）
+    match = re.search(r"半", text)
+    if match:
+        return 30
 
+    return None
 # .envファイルの読み込み
 load_dotenv()
 app = Flask(__name__)

@@ -7,8 +7,10 @@ from dotenv import load_dotenv
 import re
 import datetime
 
-from subject_dict import ALL_SUBJECTS
+from subject_dict import get_all_subjects
 from spreadsheet_utils import update_notification_time, record_study_log
+
+ALL_SUBJECTS = get_all_subjects()
 
 # ✅ 時間帯の日本語→英語変換
 label_mapping = {
@@ -120,7 +122,7 @@ def handle_message(event):
         if time_period and new_time:
             reply = update_notification_time(user_id, time_period, new_time)
         else:
-            reply = "⚠️ 通知時間の形式が正しくありません（例：「朝7時30分に通知して」）"
+            reply = "⚠️ 通知時間の形式が正しくありません（例：「朝の通知を7時30分にして」）"
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
 
@@ -130,7 +132,7 @@ def handle_message(event):
     if not time_match:
         reply = (
             "⚠️ 入力形式が判別できませんでした。\n\n"
-            "📌 通知変更 → 例：「朝7時30分に通知して」\n"
+            "📌 通知変更 → 例：「朝の通知を7時30分にして」\n"
             "📌 学習記録 → 例：「英語30分」「情報 1時間」"
         )
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))

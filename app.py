@@ -64,7 +64,7 @@ def is_notification_message(text):
 
 # ✅ 学習記録メッセージであるかの判定（辞書 + 時間形式）
 def is_study_log_message(text):
-    has_time = bool(re.search(r"([0-9０-９]+)\s*(分|ふん|時間)", text))
+    has_time = bool(re.search(r"[0-9０-９]+時間[0-9０-９]+分|[0-9０-９]+時間半|[0-9０-９]+時間|[0-9０-９]+分|半", text))
     has_subject = any(subject in text for subject in KNOWN_SUBJECTS)
     return has_time and has_subject
 

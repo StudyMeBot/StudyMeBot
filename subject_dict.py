@@ -1,8 +1,6 @@
 # subject_dict.py
 
-# subject_dict.py
-
-CATEGORIZED_SUBJECTS = {
+KNOWN_SUBJECTS = {
     "幼児": [
         "えんぴつ", "ぬりえ", "ひらがな", "かず", "リトミック", "りとみっく", "おゆうぎ"
     ],

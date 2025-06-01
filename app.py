@@ -69,34 +69,39 @@ def is_study_log_message(text):
     return has_time and has_subject
 
 # ✅ subject を辞書から抽出
-import re
-
 def extract_minutes(text: str) -> int | None:
-    # 1. 「1時間24分」のようなパターンを最初にチェック
+    # 1. 「1時間30分」や「2時間24分」などのパターン
     match = re.search(r"(?P<hour>\d+)時間(?P<minute>\d+)分", text)
     if match:
         hour = int(match.group("hour"))
         minute = int(match.group("minute"))
         return hour * 60 + minute
 
-    # 2. 「1時間」だけのパターン
+    # 2. 「1時間半」や「2時間半」などのパターン
+    match = re.search(r"(?P<hour>\d+)時間半", text)
+    if match:
+        hour = int(match.group("hour"))
+        return hour * 60 + 30
+
+    # 3. 「1時間」だけのパターン
     match = re.search(r"(?P<hour>\d+)時間", text)
     if match:
         hour = int(match.group("hour"))
         return hour * 60
 
-    # 3. 「24分」だけのパターン
+    # 4. 「24分」だけのパターン
     match = re.search(r"(?P<minute>\d+)分", text)
     if match:
         minute = int(match.group("minute"))
         return minute
 
-    # 4. 最後に「半」だけのパターン（必要に応じて）
-    match = re.search(r"半", text)
+    # 5. 「半」だけのパターン（単独使用時）
+    match = re.search(r"(^|[^0-9])半(分)?", text)
     if match:
         return 30
 
     return None
+
 # .envファイルの読み込み
 load_dotenv()
 app = Flask(__name__)

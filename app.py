@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import re
 import datetime
 
-from subject_dict import KNOWN_SUBJECTS
+from subject_dict import ALL_SUBJECTS
 from spreadsheet_utils import update_notification_time, record_study_log
 
 # ✅ 時間帯の日本語→英語変換
@@ -64,13 +64,13 @@ def is_notification_message(text):
 
 # ✅ 学習記録メッセージであるかの判定（辞書 + 時間形式）
 def is_study_log_message(text):
-    has_time = bool(re.search(r"(\d+)\s*(分|ふん|時間)", text))
+    has_time = bool(re.search(r"([0-9０-９]+)\s*(分|ふん|時間)", text))
     has_subject = any(subject in text for subject in KNOWN_SUBJECTS)
     return has_time and has_subject
 
 # ✅ subject を辞書から抽出
 def parse_subject(text: str) -> str | None:
-    for subject in KNOWN_SUBJECTS:
+    for subject in ALL_SUBJECTS:
         if subject in text:
             return subject
     return None
@@ -126,7 +126,7 @@ def handle_message(event):
 
     # 🧠 学習記録メッセージかどうか判定
     import re
-    time_match = re.search(r"(\d+)\s*(分|ふん|時間)", text)
+    time_match = re.search(r"([0-9０-９]+)\s*(分|ふん|時間)", text)
     if not time_match:
         reply = (
             "⚠️ 入力形式が判別できませんでした。\n\n"

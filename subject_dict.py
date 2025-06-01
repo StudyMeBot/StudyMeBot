@@ -42,3 +42,5 @@ KNOWN_SUBJECTS = {
         "資料作成", "しりょうさくせい", "Excel", "えくせる", "プレゼン", "ぷれぜん", "ライティング", "らいてぃんぐ"
     ]
 }
+
+ALL_SUBJECTS = list(set(sum(KNOWN_SUBJECTS.values(), [])))

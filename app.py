@@ -70,10 +70,13 @@ def is_study_log_message(text):
 
 # ✅ subject を辞書から抽出
 def parse_subject_and_minutes(text: str) -> tuple[str, int] | None:
-    # 「英語30分」「数学1時間」「物理1時間半」などを抽出する正規表現
-    pattern = r"(?P<subject>.+?)(?:(?P<hour>\d+)時間)?(?:(?P<half>半))?(?:(?P<minute>\d+)分)?"
-    match = re.search(pattern, text)
-
+    pattern = r"""(?P<subject>.+?)
+                  (?:
+                    (?P<hour>\d+)時間(?P<half>半)? |
+                    (?P<minute>\d+)分 |
+                    (?P<only_half>半)
+                  )"""
+    match = re.search(pattern, text, re.VERBOSE)
     if not match:
         return None
 
@@ -82,12 +85,12 @@ def parse_subject_and_minutes(text: str) -> tuple[str, int] | None:
 
     if match.group("hour"):
         minutes += int(match.group("hour")) * 60
-
-    if match.group("half"):
-        minutes += 30
-
-    if match.group("minute"):
+        if match.group("half"):
+            minutes += 30
+    elif match.group("minute"):
         minutes += int(match.group("minute"))
+    elif match.group("only_half"):
+        minutes += 30
 
     return (subject, minutes) if subject and minutes > 0 else None
 

@@ -43,4 +43,5 @@ KNOWN_SUBJECTS = {
     ]
 }
 
-ALL_SUBJECTS = list(set(sum(KNOWN_SUBJECTS.values(), [])))
+def get_all_subjects():
+    return list(set(sum(CATEGORIZED_SUBJECTS.values(), [])))

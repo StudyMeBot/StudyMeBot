@@ -69,6 +69,8 @@ def is_study_log_message(text):
     return has_time and has_subject
 
 # ✅ subject を辞書から抽出
+import re
+
 def extract_minutes(text: str) -> int | None:
     # 1. 「1時間30分」や「2時間24分」などのパターン
     match = re.search(r"(?P<hour>\d+)時間(?P<minute>\d+)分", text)
@@ -151,25 +153,33 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
 
-    # 🧠 学習記録メッセージかどうか判定
+    # 🧠 学習記録メッセージかどうか判定（正規表現を強化）
     import re
-    time_match = re.search(r"([0-9０-９]+)\s*(分|ふん|時間)", text)
+
+    # 複合表現（例：1時間30分、１時間３０分、2時間半、半）をカバー
+    time_match = re.search(r"([0-9０-９]+)時間([0-9０-９]+)分|([0-9０-９]+)時間半|([0-9０-９]+)時間|([0-9０-９]+)分|半", text)
+
     if not time_match:
         reply = (
             "⚠️ 入力形式が判別できませんでした。\n\n"
-            "📌 通知変更 → 例：「朝の通知を7時30分にして」\n"
-            "📌 学習記録 → 例：「英語30分」「情報 1時間」"
+            "🔁 通知変更 ⇒ 例：「朝の通知を7時30分にして」\n"
+            "📝 学習記録 ⇒ 例：「英語30分」「情報1時間」"
         )
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
-
-    # 分数に変換
-    if time_match.group(2) in ["分", "ふん"]:
-        minutes = int(time_match.group(1))
-    elif time_match.group(2) == "時間":
-        minutes = int(time_match.group(1)) * 60
-    else:
-        minutes = 0
+    
+    # ✅ 分数に変換（マッチしたグループの順にチェック）
+    minutes = 0
+    if time_match.group(1) and time_match.group(2):  # 例：1時間30分
+        minutes = int(time_match.group(1)) * 60 + int(time_match.group(2))
+    elif time_match.group(3):  # 例：2時間半
+        minutes = int(time_match.group(3)) * 60 + 30
+    elif time_match.group(4):  # 例：2時間
+        minutes = int(time_match.group(4)) * 60
+    elif time_match.group(5):  # 例：30分
+        minutes = int(time_match.group(5))
+    else:  # 例：半
+        minutes = 30
 
     # 📚 subject 抽出（辞書ベースで検索）
     subject = None

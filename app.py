@@ -69,28 +69,24 @@ def is_study_log_message(text):
     return has_time and has_subject
 
 # ✅ subject を辞書から抽出
+import re
+
 def parse_subject_and_minutes(text: str) -> tuple[str, int] | None:
-    pattern = r"""(?P<subject>.+?)
-                  (?:
-                    (?P<hour>\d+)時間(?P<half>半)? |
-                    (?P<minute>\d+)分 |
-                    (?P<only_half>半)
-                  )"""
-    match = re.search(pattern, text, re.VERBOSE)
+    pattern = r"(?P<subject>.+?)(?:(?P<hour>\d+)時間)?(?:(?P<half>半))?(?:(?P<minute>\d+)分)?"
+    match = re.search(pattern, text)
     if not match:
         return None
 
     subject = match.group("subject").strip()
     minutes = 0
 
+    # 合計時間の算出
     if match.group("hour"):
         minutes += int(match.group("hour")) * 60
-        if match.group("half"):
-            minutes += 30
-    elif match.group("minute"):
-        minutes += int(match.group("minute"))
-    elif match.group("only_half"):
+    if match.group("half"):
         minutes += 30
+    if match.group("minute"):
+        minutes += int(match.group("minute"))
 
     return (subject, minutes) if subject and minutes > 0 else None
 

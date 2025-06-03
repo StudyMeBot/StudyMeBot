@@ -68,8 +68,8 @@ def update_notification_time(user_id, time_period_jp, new_time):
 # ✅ 学習記録用の関数（新規追加）
 def record_study_log(data):
     """
-    学習記録を StudyMeBotStudyLog の StudyLog シートに記録し、
-    必要に応じて user_id ごとの個別シートも自動生成します。
+    学習記録を StudyLog シートに記録し、
+    各 user_id ごとの個別シートにも同時に追記します。
     """
     try:
         scope = [
@@ -81,25 +81,34 @@ def record_study_log(data):
         gc = gspread.authorize(credentials)
 
         sh = gc.open("StudyMeBotStudyLog")
-        worksheet = sh.worksheet("StudyLog")
 
-        row = [
+        # === StudyLog に記録 ===
+        main_ws = sh.worksheet("StudyLog")
+        main_row = [
             data["datetime"],
             data["user_id"],
             data["subject"],
             data["minutes"],
             data["raw_message"]
         ]
-        worksheet.append_row(row)
+        main_ws.append_row(main_row)
 
-        # ✅ ここから：user_id シートを自動作成（初回のみ）
+        # === 各 user_id シートにも記録 ===
         user_id = data["user_id"]
+        try:
+            user_ws = sh.worksheet(user_id)
+        except gspread.exceptions.WorksheetNotFound:
+            user_ws = sh.add_worksheet(title=user_id, rows="1000", cols="4")
+            user_ws.append_row(["datetime", "subject", "minutes", "raw_message"])  # ヘッダー追加
 
-    try:
-        sh.worksheet(user_id)
-    except gspread.exceptions.WorksheetNotFound:
-        new_ws = sh.add_worksheet(title=user_id, rows="1000", cols="5")
-        new_ws.append_row(["datetime", "subject", "minutes", "raw_message"])
+        user_ws.append_row([
+            data["datetime"],
+            data["subject"],
+            data["minutes"],
+            data["raw_message"]
+        ])
+
+        print(f"✅ {user_id} に記録を追加しました")
 
     except Exception as e:
         print(f"❌ 学習記録の記入中にエラーが発生しました：{e}")

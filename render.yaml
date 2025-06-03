@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: studymebot-web
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: GOOGLE_CREDS_JSON
+        sync: false
+      - key: LINE_CHANNEL_ACCESS_TOKEN
+        sync: false
+
+  - type: cron
+    name: studymebot-daily-graph
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python generate_and_send_graphs.py
+    schedule: "0 13 * * *"  # 毎日日本時間22:00（UTCで13:00）
+    envVars:
+      - key: GOOGLE_CREDS_JSON
+        sync: false
+      - key: LINE_CHANNEL_ACCESS_TOKEN
+        sync: false

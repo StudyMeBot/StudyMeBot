@@ -94,17 +94,12 @@ def record_study_log(data):
 
         # ✅ ここから：user_id シートを自動作成（初回のみ）
         user_id = data["user_id"]
-        print(f"📥 新しい記録：user_id = {user_id}")  # ← 追加！
 
     try:
         sh.worksheet(user_id)
-        print(f"✅ 既にシート {user_id} が存在します")
     except gspread.exceptions.WorksheetNotFound:
-        print(f"🆕 シート {user_id} が見つからないため新規作成します")
         new_ws = sh.add_worksheet(title=user_id, rows="1000", cols="5")
         new_ws.append_row(["datetime", "subject", "minutes", "raw_message"])
-        print(f"✅ 新しいシート「{user_id}」を作成しました")
-
 
     except Exception as e:
         print(f"❌ 学習記録の記入中にエラーが発生しました：{e}")

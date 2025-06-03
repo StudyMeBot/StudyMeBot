@@ -53,6 +53,8 @@ def send_image_to_line(user_id, image_url):
     print(f"Sent to {user_id}: {r.status_code}, {r.text}")
 
 # === グラフ生成関数 ===
+import os  # 上部で一度だけ
+
 def generate_graph(df, user_id, period_label, start_date):
     df_period = df[df["date"] >= start_date]
     summary = df_period.groupby("subject")["minutes"].sum().sort_values(ascending=False)
@@ -60,19 +62,22 @@ def generate_graph(df, user_id, period_label, start_date):
 
     plt.figure(figsize=(6, 4))
     summary.plot(kind="bar", color="skyblue")
-    plt.title(f"{period_label.upper()}\u306e\u5b66\u7fd2\u6642\u9593\uff08\u5408\u8a08: {total}\u5206\uff09")
-    plt.ylabel("\u5b66\u7fd2\u6642\u9593\uff08\u5206\uff09")
-    plt.xlabel("\u79d1\u76ee")
+    plt.title(f"{period_label.upper()}の学習時間（合計: {total}分）")
+    plt.ylabel("学習時間（分）")
+    plt.xlabel("科目")
     plt.xticks(rotation=0)
     plt.tight_layout()
 
+    # ✅ 保存先のディレクトリを先に作成
+    os.makedirs("/mnt/data", exist_ok=True)
     filename = f"study_chart_{period_label}_{user_id}.png"
     path = f"/mnt/data/{filename}"
     plt.savefig(path)
     plt.close()
 
-    # staticフォルダにコピー
+    # staticにコピー
     static_path = f"static/{filename}"
+    os.makedirs("static", exist_ok=True)
     shutil.copy(path, static_path)
 
     return filename

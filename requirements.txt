@@ -3,3 +3,6 @@ line-bot-sdk
 python-dotenv
 gspread
 google-auth
+gspread
+oauth2client
+pandas

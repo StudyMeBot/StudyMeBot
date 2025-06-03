@@ -68,17 +68,12 @@ def generate_graph(df, user_id, period_label, start_date):
     plt.xticks(rotation=0)
     plt.tight_layout()
 
-    # ✅ 保存先のディレクトリを先に作成
-    os.makedirs("/mnt/data", exist_ok=True)
+    # ✅ staticフォルダを確実に作る
+    os.makedirs("static", exist_ok=True)
     filename = f"study_chart_{period_label}_{user_id}.png"
-    path = f"/mnt/data/{filename}"
+    path = f"static/{filename}"
     plt.savefig(path)
     plt.close()
-
-    # staticにコピー
-    static_path = f"static/{filename}"
-    os.makedirs("static", exist_ok=True)
-    shutil.copy(path, static_path)
 
     return filename
 

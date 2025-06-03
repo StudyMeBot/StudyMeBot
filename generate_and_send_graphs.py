@@ -88,7 +88,8 @@ for user_id, line_user_id in id_map.items():
 
     sheet = sh.worksheet(user_id)
     df = pd.DataFrame(sheet.get_all_records())
-    df["date"] = pd.to_datetime(df["date"])
+    df["datetime"] = pd.to_datetime(df["datetime"])
+    df["date"] = df["datetime"].dt.date
     df["minutes"] = df["minutes"].astype(int)
 
     for label, start_date in periods.items():

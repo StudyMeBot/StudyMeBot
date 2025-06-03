@@ -6,7 +6,7 @@ import json, os, tempfile
 
 def get_credentials_from_env():
     creds_dict = json.loads(os.getenv("GOOGLE_CREDS_JSON"))
-    with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.json') as tmp:
+    with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".json") as tmp:
         json.dump(creds_dict, tmp)
         return tmp.name
 
@@ -68,14 +68,8 @@ def update_notification_time(user_id, time_period_jp, new_time):
 # ✅ 学習記録用の関数（新規追加）
 def record_study_log(data):
     """
-    学習記録を StudyMeBotStudyLog の StudyLog シートに記録します。
-    data: dict {
-        'datetime': ISO形式の日付,
-        'user_id': LINEのユーザーID,
-        'subject': 科目・タグ,
-        'minutes': 数値（分）,
-        'raw_message': 元のLINEメッセージ
-    }
+    学習記録を StudyMeBotStudyLog の StudyLog シートに記録し、
+    必要に応じて user_id ごとの個別シートも自動生成します。
     """
     try:
         scope = [
@@ -90,12 +84,22 @@ def record_study_log(data):
         worksheet = sh.worksheet("StudyLog")
 
         row = [
-            data['datetime'],
-            data['user_id'],
-            data['subject'],
-            data['minutes'],
-            data['raw_message']
+            data["datetime"],
+            data["user_id"],
+            data["subject"],
+            data["minutes"],
+            data["raw_message"]
         ]
         worksheet.append_row(row)
+
+        # ✅ ここから：user_id シートを自動作成（初回のみ）
+        user_id = data["user_id"]
+        try:
+            sh.worksheet(user_id)  # 既にあるか確認
+        except gspread.exceptions.WorksheetNotFound:
+            new_ws = sh.add_worksheet(title=user_id, rows="1000", cols="5")
+            new_ws.append_row(["datetime", "subject", "minutes", "raw_message"])
+            print(f"✅ 新しいシート『{user_id}』を作成しました。")
+
     except Exception as e:
-        print(f"学習記録の記入中にエラーが発生しました: {e}")
+        print(f"❌ 学習記録の記入中にエラーが発生しました：{e}")

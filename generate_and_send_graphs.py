@@ -77,7 +77,7 @@ def generate_graph(df, user_id, period_label, start_date):
     plt.savefig(path)
     plt.close()
     print(f"✅ 保存パス: {path}")
-    print(f"✅ URL: https://your-app.onrender.com/static/{filename}")
+    print(f"✅ URL: https://studymebot-i1g0.onrender.com/static/study_chart_day_{filename}.png")
 
     return filename
 

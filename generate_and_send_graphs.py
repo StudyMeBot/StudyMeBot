@@ -97,6 +97,6 @@ for user_id, line_user_id in id_map.items():
     # 今日のグラフだけ生成・送信
     filename = generate_graph(df, user_id, 'day', start_of_day)
     if filename:
-        image_url = f"https://your-app.onrender.com/static/{filename}"
+        image_url = f"https://studymebot-i1g0.onrender.com/static/{filename}"
         send_image_to_line(line_user_id, image_url)
 

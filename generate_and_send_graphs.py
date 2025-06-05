@@ -76,6 +76,8 @@ def generate_graph(df, user_id, period_label, start_date):
     path = f"static/{filename}"
     plt.savefig(path)
     plt.close()
+    print(f"✅ 保存パス: {path}")
+    print(f"✅ URL: https://your-app.onrender.com/static/{filename}")
 
     return filename
 

@@ -106,7 +106,7 @@ def extract_minutes(text: str) -> int | None:
 
 # .envファイルの読み込み
 load_dotenv()
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 # LINE Messaging APIの認証情報
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))

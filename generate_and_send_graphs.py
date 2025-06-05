@@ -95,6 +95,7 @@ for user_id, line_user_id in id_map.items():
     df["datetime"] = pd.to_datetime(df["datetime"])
     df["date"] = df["datetime"].dt.date
     df["minutes"] = df["minutes"].astype(int)
+    print(f"📆 最新データ: {df['date'].max()}")
 
     # 今日のグラフだけ生成・送信
     filename = generate_graph(df, user_id, 'day', start_of_day)

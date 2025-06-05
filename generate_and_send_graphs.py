@@ -58,17 +58,20 @@ import os  # 上部で一度だけ
 def generate_graph(df, user_id, period_label, start_date):
     df_period = df[df["date"] >= start_date]
     summary = df_period.groupby("subject")["minutes"].sum().sort_values(ascending=False)
+
+    if summary.empty:
+        print(f"📭 No study data for {user_id} in {period_label}. Skipping.")
+        return None  # グラフは作らない
+
     total = summary.sum()
 
     plt.figure(figsize=(6, 4))
     summary.plot(kind="bar", color="skyblue")
     plt.title(f"{period_label.upper()}の学習時間（合計: {total}分）")
     plt.ylabel("学習時間（分）")
-    plt.xlabel("科目")
     plt.xticks(rotation=0)
     plt.tight_layout()
 
-    # ✅ staticフォルダを確実に作る
     os.makedirs("static", exist_ok=True)
     filename = f"study_chart_{period_label}_{user_id}.png"
     path = f"static/{filename}"
@@ -94,6 +97,6 @@ for user_id, line_user_id in id_map.items():
 
     for label, start_date in periods.items():
         filename = generate_graph(df, user_id, label, start_date)
-        image_url = f"https://your-app.onrender.com/static/{filename}"
-        send_image_to_line(line_user_id, image_url)
-
+        if filename:  # ← ファイルが正しく生成されたときのみ送信
+            image_url = f"https://your-app.onrender.com/static/{filename}"
+            send_image_to_line(line_user_id, image_url)

@@ -58,6 +58,11 @@ import os  # 上部で一度だけ
 def generate_graph(df, user_id, period_label, start_date):
     df_period = df[df["date"] >= start_date]
     summary = df_period.groupby("subject")["minutes"].sum().sort_values(ascending=False)
+
+    # データが存在しない場合はグラフを生成しない
+    if summary.empty:
+        return None
+
     total = summary.sum()
 
     plt.figure(figsize=(6, 4))
@@ -94,6 +99,8 @@ for user_id, line_user_id in id_map.items():
 
     for label, start_date in periods.items():
         filename = generate_graph(df, user_id, label, start_date)
+        if not filename:
+            continue
         image_url = f"https://your-app.onrender.com/static/{filename}"
         send_image_to_line(line_user_id, image_url)
 

@@ -34,7 +34,6 @@ periods = {
     "day": start_of_day
 }
 
-
 # === LINE送信関数 ===
 def send_image_to_line(user_id, image_url):
     headers = {
@@ -52,20 +51,35 @@ def send_image_to_line(user_id, image_url):
     r = requests.post("https://api.line.me/v2/bot/message/push", headers=headers, json=payload)
     print(f"Sent to {user_id}: {r.status_code}, {r.text}")
 
+def send_text_to_line(user_id, message):
+    headers = {
+        "Authorization": f"Bearer {LINE_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "to": user_id,
+        "messages": [{
+            "type": "text",
+            "text": message
+        }]
+    }
+    r = requests.post("https://api.line.me/v2/bot/message/push", headers=headers, json=payload)
+    print(f"Text sent to {user_id}: {r.status_code}, {r.text}")
+
 # === グラフ生成関数 ===
 def generate_graph(df, user_id, period_label, start_date):
     df_period = df[df["date"] >= start_date]
     summary = df_period.groupby("subject")["minutes"].sum().sort_values(ascending=False)
 
     if summary.empty:
-        print(f"🔕 No study data for {user_id} in {period_label}. Skipping.")
+        print(f"⚠️ No study data for {user_id} in {period_label}. Skipping.")
         return None
 
     total = summary.sum()
 
     plt.figure(figsize=(6, 4))
     summary.plot(kind="bar", color="skyblue")
-    plt.title(f"{period_label.upper()}の学習時間（合計：{total}分）")
+    plt.title(f"{period_label.upper()}の学習時間 (合計: {total}分)")
     plt.ylabel("学習時間（分）")
     plt.xlabel("科目")
     plt.xticks(rotation=0)
@@ -77,13 +91,13 @@ def generate_graph(df, user_id, period_label, start_date):
     plt.savefig(path)
     plt.close()
     print(f"✅ 保存パス: {path}")
-    print(f"✅ URL: https://studymebot-i1g0.onrender.com/static/study_chart_day_{filename}.png")
+    print(f"✅ URL: https://studymebot-1lgo.onrender.com/static/{filename}")
 
     return filename
 
 # === user_id → line_user_id のマッピングをStudyLogから取得 ===
 df_log = pd.DataFrame(sh.worksheet("StudyLog").get_all_records())
-id_map = {uid: uid for uid in df_log['user_id'].unique()}
+id_map = {uid: uid for uid in df_log["user_id"].unique()}
 
 # === 各ユーザーを処理 ===
 for user_id, line_user_id in id_map.items():
@@ -97,9 +111,11 @@ for user_id, line_user_id in id_map.items():
     df["minutes"] = df["minutes"].astype(int)
     print(f"📆 最新データ: {df['date'].max()}")
 
-    # 今日のグラフだけ生成・送信
-    filename = generate_graph(df, user_id, 'day', start_of_day)
+    # === 今日のグラフだけ生成・送信 ===
+    filename = generate_graph(df, user_id, "day", start_of_day)
     if filename:
-        image_url = f"https://studymebot-i1g0.onrender.com/static/{filename}"
+        image_url = f"https://studymebot-1lgo.onrender.com/static/{filename}"
         send_image_to_line(line_user_id, image_url)
-
+    else:
+        message = "今日は学習記録がありませんでした。明日は忘れずに記録をつけましょう！📚"
+        send_text_to_line(line_user_id, message)

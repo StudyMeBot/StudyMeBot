@@ -7,9 +7,8 @@ from dotenv import load_dotenv
 import re
 import datetime
 
-from subject_dict import ALL_SUBJECTS
-from spreadsheet_utils import update_notification_time, record_study_log
-
+from data_utils.subject_dict import ALL_SUBJECTS
+from spreadsheet_utils.spreadsheet_utils import update_notification_time, record_study_log
 from goal_manager.parse_goal import parse_daily_goal_message
 from goal_manager.save_goal import save_daily_goal
 

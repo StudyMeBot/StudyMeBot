@@ -1,4 +1,6 @@
 import gspread
+import json
+import os
 from oauth2client.service_account import ServiceAccountCredentials
 from goal_manager.utils import get_today_dates
 
@@ -14,7 +16,8 @@ def save_or_update_daily_goal(user_id: str, goal_data: dict):
         'https://spreadsheets.google.com/feeds',
         'https://www.googleapis.com/auth/drive'
     ]
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds_dict = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
     sheet = client.open("StudyMeBotStudyLog").worksheet("Goals")
 

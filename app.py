@@ -10,6 +10,9 @@ import datetime
 from subject_dict import ALL_SUBJECTS
 from spreadsheet_utils import update_notification_time, record_study_log
 
+from goal_manager.parse_goal import parse_daily_goal_message
+from goal_manager.save_goal import save_daily_goal
+
 # ✅ 時間帯の日本語→英語変換
 label_mapping = {
     "朝": "morning",
@@ -150,6 +153,17 @@ def handle_message(event):
             reply = update_notification_time(user_id, time_period, new_time)
         else:
             reply = "⚠️ 通知時間の形式が正しくありません（例：「朝の通知を7時30分にして」）"
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
+        return
+
+    # 💬 目標設定メッセージかどうか判定
+    goal_data = parse_daily_goal_message(text)
+    if goal_data:
+        try:
+            save_daily_goal(user_id, goal_data)
+            reply = f"✅ 毎日の目標『{goal_data['value']}分』を設定しました！"
+        except Exception as e:
+            reply = f"⚠️ 目標の保存中にエラーが発生しました: {e}"
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
         return
 

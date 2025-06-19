@@ -11,7 +11,15 @@ line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 # LINEにメッセージを送信する関数
 def send_line_message(user_id, message):
     from linebot.models import TextSendMessage
-    line_bot_api.push_message(user_id, TextSendMessage(text=message))
+    from linebot.exceptions import LineBotApiError
+
+    try:
+        line_bot_api.push_message(user_id, TextSendMessage(text=message))
+        print(f"✅ メッセージ送信成功: {user_id}")
+    except LineBotApiError as e:
+        print(f"❌ メッセージ送信失敗: {user_id} → {e}")
+    except Exception as e:
+        print(f"⚠️ 予期しないエラー: {user_id} → {e}")
 
 # メイン処理
 def generate_and_send_goal_report():

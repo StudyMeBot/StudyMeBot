@@ -115,6 +115,7 @@ def record_study_log(data):
 
 # 👥 学習記録または目標に登場する全 user_id を取得
 def get_all_user_ids():
+    print(f"🧪 GOAL_SHEET_NAME: '{GOAL_SHEET_NAME}'")
     client = authorize_sheet()
     sheet_names = [ws.title for ws in client.open("StudyMeBotStudyLog").worksheets()]
     print("📄 存在するシート一覧:", sheet_names)

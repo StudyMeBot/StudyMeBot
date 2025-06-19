@@ -29,7 +29,7 @@ def generate_and_send_goal_report():
     valid_user_ids = [uid for uid in user_ids if uid.startswith("U")]
     print(f"✅ 有効なユーザーID: {valid_user_ids}")
 
-    for user_id in user_ids:
+    for user_id in valid_user_ids: 
         goal_minutes = get_today_goal(user_id, today)
         study_minutes = get_today_study_minutes(user_id, today)
 

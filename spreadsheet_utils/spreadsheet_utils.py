@@ -4,6 +4,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import json, os, tempfile
 from goal_manager.utils import get_today_dates
+GOAL_SHEET_NAME = "Goals (daily)".strip()
 
 # 📌 credentials.json を tempファイルで扱う形式
 
@@ -115,7 +116,7 @@ def record_study_log(data):
 # 👥 学習記録または目標に登場する全 user_id を取得
 def get_all_user_ids():
     client = authorize_sheet()
-    goal_sheet = client.open("StudyMeBotStudyLog").worksheet("Goals（daily)")
+    goal_sheet = client.open("StudyMeBotStudyLog").worksheet(GOAL_SHEET_NAME)
     study_sheet = client.open("StudyMeBotStudyLog").worksheet("StudyLog")
 
     goal_ids = [row["user_id"] for row in goal_sheet.get_all_records()]
@@ -125,7 +126,7 @@ def get_all_user_ids():
 # 🎯 今日の目標（分）を取得
 def get_today_goal(user_id, date_str):
     client = authorize_sheet()
-    sheet = client.open("StudyMeBotStudyLog").worksheet("Goals（daily)")
+    sheet = client.open("StudyMeBotStudyLog").worksheet(GOAL_SHEET_NAME)
     records = sheet.get_all_records()
     for row in records:
         if row["user_id"] == user_id and row["start_date"] == date_str:

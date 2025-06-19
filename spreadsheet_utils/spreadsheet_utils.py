@@ -125,7 +125,7 @@ def get_all_user_ids():
 # 🎯 今日の目標（分）を取得
 def get_today_goal(user_id, date_str):
     client = authorize_sheet()
-    sheet = client.open("StudyMeBotStudyLog").worksheet("Goals（daily）")
+    sheet = client.open("StudyMeBotStudyLog").worksheet("Goals（daily)")
     records = sheet.get_all_records()
     for row in records:
         if row["user_id"] == user_id and row["start_date"] == date_str:

@@ -101,6 +101,11 @@ id_map = {uid: uid for uid in df_log["user_id"].unique()}
 
 # === 各ユーザーを処理 ===
 for user_id, line_user_id in id_map.items():
+        # LINE ID のバリデーション
+    if not line_user_id or not isinstance(line_user_id, str) or line_user_id.strip() == "":
+        print(f"⚠ 無効な line_user_id をスキップ: {line_user_id}")
+        continue
+    print(f"✅ 送信対象 line_user_id: {line_user_id}")
     if user_id not in [ws.title for ws in sh.worksheets()]:
         continue
 

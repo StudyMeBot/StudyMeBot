@@ -17,6 +17,9 @@ def send_line_message(user_id, message):
 def generate_and_send_goal_report():
     today = datetime.now().strftime("%Y/%m/%d")
     user_ids = get_all_user_ids()
+    print(f"🎯 取得したユーザーID一覧: {user_ids}")
+    valid_user_ids = [uid for uid in user_ids if uid.startswith("U")]
+    print(f"✅ 有効なユーザーID: {valid_user_ids}")
 
     for user_id in user_ids:
         goal_minutes = get_today_goal(user_id, today)
